@@ -1,99 +1,46 @@
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
 from enum import Enum
 
 class PeriodoMeta(Enum):
-    DIARIO = "diario"
-    SEMANAL = "semanal"
-    MENSUAL = "mensual"
+    DIARIO = "Diario"
+    SEMANAL = "Semanal"
+    MENSUAL = "Mensual"
 
 class Meta:
-    """Clase que representa una meta de estudio."""
-    
-    def __init__(self, usuario_id: str, materia: str, minutos_objetivo: int, 
-                 periodo: PeriodoMeta, fecha_inicio: Optional[datetime] = None):
-        self.__id = None  # Será asignado por MongoDB
-        self.__usuario_id = usuario_id
-        self.__materia = materia
-        self.__minutos_objetivo = minutos_objetivo
-        self.__periodo = periodo
-        self.__fecha_inicio = fecha_inicio or datetime.now()
-        self.__completada = False
+    def __init__(self, usuario_id=None, materia=None, minutos_objetivo=0, periodo=PeriodoMeta.SEMANAL, fecha_inicio=None):
+        self._id = None
+        self.usuario_id = usuario_id
+        self.materia = materia
+        self.minutos_objetivo = minutos_objetivo
+        self.periodo = periodo
+        self.fecha_inicio = fecha_inicio or datetime.now()
+        self.completada = False
         
-    @property
-    def id(self) -> Optional[str]:
-        return self.__id
-        
-    @id.setter
-    def id(self, value: str) -> None:
-        if self.__id is None:
-            self.__id = value
-    
-    @property
-    def usuario_id(self) -> str:
-        return self.__usuario_id
-    
-    @property
-    def materia(self) -> str:
-        return self.__materia
-    
-    @property
-    def minutos_objetivo(self) -> int:
-        return self.__minutos_objetivo
-    
-    @property
-    def periodo(self) -> PeriodoMeta:
-        return self.__periodo
-    
-    @property
-    def fecha_inicio(self) -> datetime:
-        return self.__fecha_inicio
-    
-    @property
-    def fecha_fin(self) -> datetime:
-        """Calcula la fecha de finalización basada en el periodo."""
-        if self.__periodo == PeriodoMeta.DIARIO:
-            return self.__fecha_inicio + timedelta(days=1)
-        elif self.__periodo == PeriodoMeta.SEMANAL:
-            return self.__fecha_inicio + timedelta(weeks=1)
-        elif self.__periodo == PeriodoMeta.MENSUAL:
-            # Aproximación simple para un mes (30 días)
-            return self.__fecha_inicio + timedelta(days=30)
-    
-    @property
-    def completada(self) -> bool:
-        return self.__completada
-    
-    @completada.setter
-    def completada(self, value: bool) -> None:
-        self.__completada = value
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convierte el objeto a un diccionario para almacenamiento en MongoDB."""
-        return {
-            "usuario_id": self.__usuario_id,
-            "materia": self.__materia,
-            "minutos_objetivo": self.__minutos_objetivo,
-            "periodo": self.__periodo.value,
-            "fecha_inicio": self.__fecha_inicio,
-            "completada": self.__completada
-        }
+        # Calcular fecha fin según el periodo
+        if periodo == PeriodoMeta.DIARIO:
+            self.fecha_fin = self.fecha_inicio + timedelta(days=1)
+        elif periodo == PeriodoMeta.SEMANAL:
+            self.fecha_fin = self.fecha_inicio + timedelta(weeks=1)
+        else:  # MENSUAL
+            self.fecha_fin = self.fecha_inicio + timedelta(days=30)
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Meta':
-        """Crea una instancia de Meta desde un diccionario."""
-        meta = cls(
-            usuario_id=data["usuario_id"],
-            materia=data["materia"],
-            minutos_objetivo=data["minutos_objetivo"],
-            periodo=PeriodoMeta(data["periodo"]),
-            fecha_inicio=data.get("fecha_inicio")
-        )
-        
-        # Establecer otros atributos
-        if "_id" in data:
-            meta.id = str(data["_id"])
-            
-        meta.__completada = data.get("completada", False)
-        
-        return meta
+    def from_dict(cls, data):
+        instance = cls()
+        for key, value in data.items():
+            if key == 'periodo' and isinstance(value, str):
+                setattr(instance, key, PeriodoMeta(value))
+            else:
+                setattr(instance, key, value)
+        return instance
+    
+    def to_dict(self):
+        return {
+            "usuario_id": self.usuario_id,
+            "materia": self.materia,
+            "minutos_objetivo": self.minutos_objetivo,
+            "periodo": self.periodo.value if isinstance(self.periodo, PeriodoMeta) else self.periodo,
+            "fecha_inicio": self.fecha_inicio,
+            "fecha_fin": self.fecha_fin,
+            "completada": self.completada
+        }

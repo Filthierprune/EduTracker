@@ -1,14 +1,19 @@
 import requests
-from typing import Dict, List, Optional, Any
 import random
+from datetime import datetime
 
 class QuotesAPI:
     """Clase para interactuar con la API de ZenQuotes."""
     
     def __init__(self):
-        self.base_url = "https://zenquotes.io/api"
-    
-    def get_random_quote(self) -> Optional[Dict[str, str]]:
+        # Algunas citas predeterminadas por si la API falla
+        self.default_quotes = [
+            {"quote": "La educación es el arma más poderosa que puedes usar para cambiar el mundo.", "author": "Nelson Mandela"},
+            {"quote": "La educación es el pasaporte hacia el futuro, el mañana pertenece a aquellos que se preparan para él en el día de hoy.", "author": "Malcolm X"},
+            {"quote": "El aprendizaje es como remar contra corriente: en cuanto se deja, se retrocede.", "author": "Edward Benjamin Britten"},
+        ]
+        
+    def get_random_quote(self):
         """
         Obtiene una frase motivacional aleatoria.
         
@@ -16,41 +21,49 @@ class QuotesAPI:
             Diccionario con la frase y el autor, o None si hay un error
         """
         try:
-            response = requests.get(f"{self.base_url}/random")
-            if response.status_code == 200:
-                data = response.json()
-                if data and len(data) > 0:
-                    return {
-                        "quote": data[0]["q"],
-                        "author": data[0]["a"]
-                    }
-            return None
-        except Exception as e:
-            print(f"Error al obtener frase: {str(e)}")
-            return None
+            response = requests.get("https://api.quotable.io/random?tags=education,learning")
+            response.raise_for_status()
+            data = response.json()
+            return {
+                "quote": data.get("content"),
+                "author": data.get("author")
+            }
+        except Exception:
+            # Fallback a citas predeterminadas
+            return random.choice(self.default_quotes)
     
-    def get_daily_quote(self) -> Optional[Dict[str, str]]:
+    def get_daily_quote(self):
         """
         Obtiene la frase motivacional del día.
         
         Returns:
             Diccionario con la frase y el autor, o None si hay un error
         """
+        # Usar la fecha actual como semilla para tener la misma cita durante todo el día
+        day_of_year = datetime.now().timetuple().tm_yday
+        random.seed(day_of_year)
         try:
-            response = requests.get(f"{self.base_url}/today")
-            if response.status_code == 200:
-                data = response.json()
-                if data and len(data) > 0:
-                    return {
-                        "quote": data[0]["q"],
-                        "author": data[0]["a"]
-                    }
-            return None
-        except Exception as e:
-            print(f"Error al obtener frase del día: {str(e)}")
-            return None
+            response = requests.get("https://api.quotable.io/quotes?tags=education,learning&limit=20")
+            response.raise_for_status()
+            data = response.json()
+            quotes = data.get("results", [])
+            if quotes:
+                quote_index = day_of_year % len(quotes)
+                quote = quotes[quote_index]
+                random.seed()  # Restablecer la semilla
+                return {
+                    "quote": quote.get("content"),
+                    "author": quote.get("author")
+                }
+        except Exception:
+            pass
+            
+        # Fallback a citas predeterminadas
+        quote = self.default_quotes[day_of_year % len(self.default_quotes)]
+        random.seed()  # Restablecer la semilla
+        return quote
     
-    def get_quotes_by_topic(self, topic: str) -> List[Dict[str, str]]:
+    def get_quotes_by_topic(self, topic: str):
         """
         Obtiene frases relacionadas con un tema específico.
         
