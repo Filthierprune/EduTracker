@@ -6,7 +6,7 @@ class BooksAPI:
     
     def __init__(self):
         self.base_url = "https://openlibrary.org/api"
-    
+        
     def search_books(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
         """
         Busca libros por título, autor o tema.
