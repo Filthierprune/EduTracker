@@ -1,0 +1,17 @@
+EduTracker/
+├── database/
+│   ├── __init__.py
+│   └── mongo_client.py
+├── api/
+│   ├── __init__.py
+│   ├── books_api.py
+│   └── quotes_api.py
+├── models/
+│   ├── __init__.py
+│   ├── estudio.py
+│   └── meta.py
+├── ui/
+│   ├── __init__.py
+│   └── gui.py
+├── main.py
+└── configuracion.env
