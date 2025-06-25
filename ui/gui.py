@@ -10,7 +10,7 @@ from bson.objectid import ObjectId
 # --- Colores del diseño ---
 COLOR_PALETTE = {
     "bg": "#EAEBD0",
-    "primary": "#DA6C6C",
+    "primary": "#DB7676",
     "accent": "#AF3E3E",
     "text": "#333333",
     "widget_bg": "#FDFDFD"
